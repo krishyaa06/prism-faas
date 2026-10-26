@@ -1,0 +1,34 @@
+<div class="sim">
+  <div class="main">
+    <div class="panel glow">
+      <div class="toolbar">
+        <button class="btn primary sm" data-play>▶ Run</button>
+        <select data-speed aria-label="Speed"><option value="0.5">0.5×</option><option value="1" selected>1×</option><option value="2">2×</option></select>
+        <span class="sep"></span>
+        <button class="btn sm" id="burst">Traffic burst ×8</button>
+        <button class="btn sm" id="ver">Deploy new version</button>
+        <span class="sep"></span>
+        <button class="btn sm on" id="snap">Snapshots</button>
+        <button class="btn sm on" id="pre">Pre-warm</button>
+        <label class="f inl">Keep-alive <input type="range" id="ka" min="2" max="40" value="12" /><output id="kao">12s</output></label>
+        <span class="sp"></span>
+        <span class="live"><i></i> paused</span>
+      </div>
+      <div id="kpis" style="margin-top:12px"></div>
+    </div>
+    <div class="viz" id="fleetw" style="height:360px"><span class="tag">MicroVM fleet · width = memory · ▒ booting · ■ busy · □ warm idle</span><canvas id="fleet"></canvas></div>
+    <div class="g2 grid">
+      <div class="panel"><div class="ph">Latency · p50 / p99 (ms)</div><canvas class="chart" id="ch1" style="height:140px"></canvas></div>
+      <div class="panel"><div class="ph">VMs · busy / warm idle / booting</div><canvas class="chart" id="ch2" style="height:140px"></canvas></div>
+    </div>
+    <div class="panel"><div class="ph">Functions</div><div class="scroll"><table class="tbl" id="fns"><thead><tr><th>Function</th><th>Runtime</th><th class="r">Memory</th><th>Version</th><th class="r">Rate</th><th class="r">VMs</th><th class="r">Cold start</th><th class="r">In-flight</th></tr></thead><tbody></tbody></table></div></div>
+  </div>
+  <div class="side">
+    <div class="panel"><div class="ph">Handler · resize-image<span class="sp"></span><button class="btn sm primary" id="inv">Invoke</button></div>
+      <textarea id="code" spellcheck="false" style="height:190px;font:12px/1.5 var(--mono)"></textarea>
+      <label class="f" style="margin-top:8px">Event JSON <input id="ev" value='{"width":4000,"height":3000,"max":1024}' spellcheck="false" /></label>
+      <div id="out" class="log" style="height:130px;margin-top:8px"></div>
+    </div>
+    <div class="panel"><div class="ph">Orchestrator events</div><div id="log" class="log" style="height:300px"></div></div>
+  </div>
+</div>

@@ -1,0 +1,43 @@
+{
+  "name": "prism-faas",
+  "version": "1.0.0",
+  "description": "Prism FaaS is a serverless function orchestrator: versioned function registry, MicroVM placement with best-fit bin packing and LRU eviction, warm pools with keep-alive, cold start vs snapshot-restore modelling, predictive pre-warming, tenant token-bucket and concurrency quotas, 429 throttling, GB-second billing and isolated handler execution.",
+  "type": "module",
+  "bin": {
+    "faas": "bin/faas.js"
+  },
+  "main": "src/index.js",
+  "exports": {
+    ".": "./src/index.js"
+  },
+  "files": [
+    "bin",
+    "src"
+  ],
+  "scripts": {
+    "test": "node --test test/*.test.js",
+    "start": "npx --yes serve ."
+  },
+  "keywords": [
+    "serverless",
+    "faas",
+    "firecracker",
+    "microvm",
+    "cold-start",
+    "lambda",
+    "orchestrator",
+    "bin-packing",
+    "autoscaling",
+    "javascript"
+  ],
+  "author": "Soumya Bhandare (krishyaa06)",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/krishyaa06/prism-faas.git"
+  },
+  "homepage": "https://krishyaa06.github.io/prism-faas/",
+  "engines": {
+    "node": ">=18.17"
+  }
+}

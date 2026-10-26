@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Prism FaaS · Serverless orchestrator: MicroVM pools, snapshots, pre-warm, quotas · Prism Systems</title>
+  <meta name="description" content="Prism FaaS is a serverless function orchestrator: versioned function registry, MicroVM placement with best-fit bin packing and LRU eviction, warm pools with keep-alive, cold start vs snapshot-restore modelling, predictive pre-warming, tenant token-bucket and concurrency quotas, 429 throttling, GB-second billing and isolated handler execution." />
+  <meta name="theme-color" content="#06070d" />
+  <meta property="og:title" content="Prism FaaS · Prism Systems" />
+  <meta property="og:description" content="Prism FaaS is a serverless function orchestrator: versioned function registry, MicroVM placement with best-fit bin packing and LRU eviction, warm pools with keep-alive, cold start vs snapshot-restore modelling, predictive pre-warming, tenant token-bucket and concurrency quotas, 429 throttling, GB-second billing and isolated handler execution." />
+  <meta property="og:image" content="https://krishyaa06.github.io/prism-faas/assets/screenshots/desktop.png" />
+  <link rel="icon" href="assets/logo.svg" type="image/svg+xml" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/pro.css" />
+  <link rel="stylesheet" href="css/app.css" />
+  <style>:root{--accent:#7C5CFF;--accent-2:#FFB547}</style>
+</head>
+<body>
+  <canvas id="bg" aria-hidden="true"></canvas>
+  <header class="topbar"><div class="wrap">
+    <a class="brand" href="./"><span class="mark">◆</span><b>PRISM</b><span>FaaS</span></a>
+    <nav>
+      <a class="nl" href="#sim">Simulator</a><a class="nl" href="#features">Features</a><a class="nl" href="#how">How it works</a><a class="nl" href="#arch">Architecture</a><a class="nl" href="#use">Use it</a>
+      <a class="btn sm" href="https://github.com/krishyaa06/prism-faas" target="_blank" rel="noreferrer">★ GitHub</a>
+    </nav>
+  </div></header>
+  <main>
+    <section class="hero wrap">
+      <p class="eyebrow"><span class="n">04 / 49</span>Prism Systems · Cloud-Native &amp; Developer Infrastructure</p>
+      <h1>A serverless orchestrator that <em>fights cold starts</em></h1>
+      <p class="lead">Firecracker-style MicroVM fleet, best-fit bin packing, warm pools with keep-alive, snapshot restores, predictive pre-warming, per-tenant quotas, throttling and GB-second billing — plus real handler execution in an isolated V8 context.</p>
+      <div class="cta"><a class="btn primary" href="#sim">▶ Launch the simulator</a><a class="btn" href="#use">Use the engine</a><a class="btn ghost" href="https://github.com/krishyaa06/prism-faas" target="_blank" rel="noreferrer">View source →</a></div>
+      <div class="chips"><span class="chip"><i></i>Zero dependencies</span><span class="chip"><i></i>Virtual clock</span><span class="chip"><i></i>Snapshot restores</span><span class="chip"><i></i>Tenant quotas</span><span class="chip"><i></i>node:vm isolate</span></div>
+    </section>
+    <section class="section wrap" id="sim">
+      <div class="sec-head"><span class="kicker">Live simulator</span><h2>Watch MicroVMs boot, serve and expire</h2><p>Four functions from two tenants share four hosts. Fire a burst, deploy a new version, switch snapshots and pre-warming off and on, change keep-alive, or edit the resize handler and invoke it. It really runs in your browser.</p></div>
+<div class="sim">
+  <div class="main">
+    <div class="panel glow">
+      <div class="toolbar">
+        <button class="btn primary sm" data-play>▶ Run</button>
+        <select data-speed aria-label="Speed"><option value="0.5">0.5×</option><option value="1" selected>1×</option><option value="2">2×</option></select>
+        <span class="sep"></span>
+        <button class="btn sm" id="burst">Traffic burst ×8</button>
+        <button class="btn sm" id="ver">Deploy new version</button>
+        <span class="sep"></span>
+        <button class="btn sm on" id="snap">Snapshots</button>
+        <button class="btn sm on" id="pre">Pre-warm</button>
+        <label class="f inl">Keep-alive <input type="range" id="ka" min="2" max="40" value="12" /><output id="kao">12s</output></label>
+        <span class="sp"></span>
+        <span class="live"><i></i> paused</span>
+      </div>
+      <div id="kpis" style="margin-top:12px"></div>
+    </div>
+    <div class="viz" id="fleetw" style="height:360px"><span class="tag">MicroVM fleet · width = memory · ▒ booting · ■ busy · □ warm idle</span><canvas id="fleet"></canvas></div>
+    <div class="g2 grid">
+      <div class="panel"><div class="ph">Latency · p50 / p99 (ms)</div><canvas class="chart" id="ch1" style="height:140px"></canvas></div>
+      <div class="panel"><div class="ph">VMs · busy / warm idle / booting</div><canvas class="chart" id="ch2" style="height:140px"></canvas></div>
+    </div>
+    <div class="panel"><div class="ph">Functions</div><div class="scroll"><table class="tbl" id="fns"><thead><tr><th>Function</th><th>Runtime</th><th class="r">Memory</th><th>Version</th><th class="r">Rate</th><th class="r">VMs</th><th class="r">Cold start</th><th class="r">In-flight</th></tr></thead><tbody></tbody></table></div></div>
+  </div>
+  <div class="side">
+    <div class="panel"><div class="ph">Handler · resize-image<span class="sp"></span><button class="btn sm primary" id="inv">Invoke</button></div>
+      <textarea id="code" spellcheck="false" style="height:190px;font:12px/1.5 var(--mono)"></textarea>
+      <label class="f" style="margin-top:8px">Event JSON <input id="ev" value='{"width":4000,"height":3000,"max":1024}' spellcheck="false" /></label>
+      <div id="out" class="log" style="height:130px;margin-top:8px"></div>
+    </div>
+    <div class="panel"><div class="ph">Orchestrator events</div><div id="log" class="log" style="height:300px"></div></div>
+  </div>
+</div>
+
+    </section>
+    <section class="section wrap" id="features">
+      <div class="sec-head reveal"><span class="kicker">Features</span><h2>What's inside the engine</h2><p>Real algorithms, not mock-ups. The simulator above runs the exact same code you import.</p></div>
+      <div class="feat"><div class="card reveal"><div class="ic">λ</div><h3>Function registry</h3><p>Versioned deploys with aliases. A new version drains old VMs: idle ones stop at once, busy ones finish first.</p></div><div class="card reveal"><div class="ic">▦</div><h3>Best-fit bin packing</h3><p>MicroVMs go to the host with the least leftover memory that still fits. When full, the least recently used idle VM is evicted.</p></div><div class="card reveal"><div class="ic">♨</div><h3>Warm pools</h3><p>Idle VMs stay warm for <code class="mono">keepAlive</code> seconds. Warm hits reuse the most recently used VM, so the pool shrinks naturally.</p></div><div class="card reveal"><div class="ic">❄</div><h3>Cold start model</h3><p>VM boot + runtime init (<code class="mono">node20</code>, <code class="mono">python312</code>, <code class="mono">java21</code>) + code size + memory, compared with snapshot restore.</p></div><div class="card reveal"><div class="ic">📸</div><h3>Snapshot restores</h3><p>After deploy, a memory snapshot is taken. Cold starts become restores, roughly 1.1s → 50ms for Java.</p></div><div class="card reveal"><div class="ic">📈</div><h3>Predictive pre-warm</h3><p>EWMA arrival rate, a decaying peak memory and measured service time size a warm pool ahead of recurring bursts.</p></div><div class="card reveal"><div class="ic">⛔</div><h3>Quotas and throttling</h3><p>Tenant token buckets, tenant/function/account concurrency limits, all returning <code class="mono">429</code> with the reason.</p></div><div class="card reveal"><div class="ic">🔒</div><h3>Real isolation</h3><p><code class="mono">runIsolated()</code> executes handlers in a fresh <code class="mono">node:vm</code> context with a CPU timeout and string code generation disabled.</p></div></div>
+    </section>
+    <section class="section wrap" id="how">
+      <div class="sec-head reveal"><span class="kicker">How it works</span><h2>From request to result</h2></div>
+      <div class="steps"><div class="step reveal"><h3>Deploy</h3><p>Register a function with runtime, memory, timeout and concurrency. A snapshot of the initialised VM is captured shortly after.</p></div><div class="step reveal"><h3>Route</h3><p>Each invocation passes the tenant rate limiter and three concurrency gates, then looks for a warm idle VM of the current version.</p></div><div class="step reveal"><h3>Start</h3><p>With no warm VM, the orchestrator places a new MicroVM best-fit (evicting LRU idle VMs if needed) and pays a cold or restore start.</p></div><div class="step reveal"><h3>Execute</h3><p>The handler runs with <code class="mono">(event, context)</code>. Duration is capped by the timeout (504), and exceptions become 500s.</p></div><div class="step reveal"><h3>Scale</h3><p>Every 500ms, keep-alive expiry reclaims idle VMs and the predictor tops up the warm pool from the arrival rate and peaks.</p></div></div>
+    </section>
+    <section class="section wrap" id="arch">
+      <div class="sec-head reveal"><span class="kicker">Architecture</span><h2>System design</h2><p>Every box is a module in src/. Data flows left to right.</p></div>
+      <div class="card arch reveal"><svg viewBox="0 0 1160 310" role="img" aria-label="Architecture diagram"><path class="e" d="M258,142 C288,142 288,164 258,164"/><path class="f" d="M258,142 C288,142 288,164 258,164"/><path class="e" d="M272,193 C435,193 435,73 598,73"/><path class="f" d="M272,193 C435,193 435,73 598,73"/><text class="el" x="435" y="127" text-anchor="middle">warm hit</text><path class="e" d="M272,193 C290,193 290,153 308,153"/><path class="f" d="M272,193 C290,193 290,153 308,153"/><text class="el" x="290" y="167" text-anchor="middle">miss</text><path class="e" d="M562,153 C580,153 580,153 598,153"/><path class="f" d="M562,153 C580,153 580,153 598,153"/><text class="el" x="580" y="147" text-anchor="middle">spawn</text><path class="e" d="M838,204 C868,204 868,182 838,182"/><path class="f" d="M838,204 C868,204 868,182 838,182"/><text class="el" x="868" y="193" text-anchor="middle">restore</text><path class="e" d="M562,73 C580,73 580,233 598,233"/><path class="f" d="M562,73 C580,73 580,233 598,233"/><path class="e" d="M562,233 C580,233 580,153 598,153"/><path class="f" d="M562,233 C580,233 580,153 598,153"/><text class="el" x="580" y="187" text-anchor="middle">pre-warm</text><path class="e" d="M852,153 C870,153 870,113 888,113"/><path class="f" d="M852,153 C870,153 870,113 888,113"/><text class="el" x="870" y="127" text-anchor="middle">run</text><path class="e" d="M1128,142 C1158,142 1158,164 1128,164"/><path class="f" d="M1128,142 C1158,142 1158,164 1128,164"/><path class="e" d="M838,124 C868,124 868,102 838,102"/><path class="f" d="M838,124 C868,124 868,102 838,102"/><text class="el" x="868" y="113" text-anchor="middle">idle</text><text class="lane" x="145" y="24" text-anchor="middle">EDGE</text><g class="node k0"><rect x="18" y="84" width="254" height="58" rx="12"/><text x="145" y="109" text-anchor="middle">Gateway</text><text class="s" x="145" y="123" text-anchor="middle">invoke()</text></g><g class="node k0"><rect x="18" y="164" width="254" height="58" rx="12"/><text x="145" y="189" text-anchor="middle">Quotas</text><text class="s" x="145" y="203" text-anchor="middle">token bucket · 429</text></g><text class="lane" x="435" y="24" text-anchor="middle">CONTROL</text><g class="node kk2"><rect x="308" y="44" width="254" height="58" rx="12"/><text x="435" y="69" text-anchor="middle">Registry</text><text class="s" x="435" y="83" text-anchor="middle">versions · aliases</text></g><g class="node kk2"><rect x="308" y="124" width="254" height="58" rx="12"/><text x="435" y="149" text-anchor="middle">Placement</text><text class="s" x="435" y="163" text-anchor="middle">best-fit · LRU evict</text></g><g class="node kk2"><rect x="308" y="204" width="254" height="58" rx="12"/><text x="435" y="229" text-anchor="middle">Pre-warmer</text><text class="s" x="435" y="243" text-anchor="middle">EWMA · peaks</text></g><text class="lane" x="725" y="24" text-anchor="middle">FLEET</text><g class="node kk3"><rect x="598" y="44" width="254" height="58" rx="12"/><text x="725" y="69" text-anchor="middle">Warm pool</text><text class="s" x="725" y="83" text-anchor="middle">keep-alive</text></g><g class="node kk3"><rect x="598" y="124" width="254" height="58" rx="12"/><text x="725" y="149" text-anchor="middle">MicroVMs</text><text class="s" x="725" y="163" text-anchor="middle">boot / restore</text></g><g class="node kk3"><rect x="598" y="204" width="254" height="58" rx="12"/><text x="725" y="229" text-anchor="middle">Snapshots</text><text class="s" x="725" y="243" text-anchor="middle">memory image</text></g><text class="lane" x="1015" y="24" text-anchor="middle">RUNTIME</text><g class="node k0"><rect x="888" y="84" width="254" height="58" rx="12"/><text x="1015" y="109" text-anchor="middle">Isolate</text><text class="s" x="1015" y="123" text-anchor="middle">node:vm</text></g><g class="node k0"><rect x="888" y="164" width="254" height="58" rx="12"/><text x="1015" y="189" text-anchor="middle">Metering</text><text class="s" x="1015" y="203" text-anchor="middle">GB-seconds</text></g></svg></div>
+    </section>
+    <section class="section wrap" id="use">
+      <div class="sec-head reveal"><span class="kicker">Use it</span><h2>Ship it in your own stack</h2><p>Zero dependencies. Works in Node.js 18+ and modern browsers.</p></div>
+      <div class="tabs" data-tabs="use"><button class="on">JavaScript API</button><button>CLI</button><button>Install</button></div>
+      <div class="tabp on" data-tabp="use"><div class="codebox"><div class="bar2"><i></i><i></i><i></i><span>example.js</span><button class="btn sm ghost copy" data-copy>Copy</button></div><pre><code><span class="tk-k">import</span> { Platform, compile } <span class="tk-k">from</span> <span class="tk-s">&quot;prism-faas&quot;</span>;
+
+<span class="tk-k">const</span> p = <span class="tk-k">new</span> <span class="tk-f">Platform</span>({ hosts: <span class="tk-n">4</span>, hostMem: <span class="tk-n">8192</span>, keepAlive: <span class="tk-n">30</span>, snapshots: <span class="tk-k">true</span> });
+p.<span class="tk-f">tenant</span>(<span class="tk-s">&quot;acme&quot;</span>, { concurrency: <span class="tk-n">100</span>, rps: <span class="tk-n">500</span> });
+
+p.<span class="tk-f">deploy</span>({
+  name: <span class="tk-s">&quot;resize&quot;</span>, tenant: <span class="tk-s">&quot;acme&quot;</span>, runtime: <span class="tk-s">&quot;node20&quot;</span>, memory: <span class="tk-n">1024</span>, timeout: <span class="tk-n">10</span>,
+  handler: <span class="tk-f">compile</span>(<span class="tk-s">`function handler(e) { return { body: { ok: true, w: e.w / 2 } } }`</span>),
+});
+
+p.<span class="tk-f">invoke</span>(<span class="tk-s">&quot;resize&quot;</span>, { w: <span class="tk-n">4000</span> }, (r) =&gt; console.<span class="tk-f">log</span>(r.status, r.kind, r.result));
+p.<span class="tk-f">advance</span>(<span class="tk-n">2</span>);                       <span class="tk-c">// virtual seconds</span>
+console.<span class="tk-f">log</span>(p.stats, p.<span class="tk-f">percentile</span>(<span class="tk-n">0.99</span>));
+
+<span class="tk-c">// Node: real isolation with a CPU timeout</span>
+<span class="tk-k">import</span> { runIsolated } <span class="tk-k">from</span> <span class="tk-s">&quot;prism-faas/src/node/vm-runner.js&quot;</span>;
+<span class="tk-f">runIsolated</span>(source, { w: <span class="tk-n">4000</span> }, { timeoutMs: <span class="tk-n">500</span> });</code></pre></div></div>
+      <div class="tabp" data-tabp="use"><div class="codebox"><div class="bar2"><i></i><i></i><i></i><span>terminal</span><button class="btn sm ghost copy" data-copy>Copy</button></div><pre><code><span class="tk-pr">$ </span>npx github:krishyaa06/prism-faas run examples/resize.js <span class="tk-p">--event</span> &#x27;{<span class="tk-s">&quot;width&quot;</span>:4000,<span class="tk-s">&quot;height&quot;</span>:3000}&#x27;
+<span class="tk-pr">$ </span>npx github:krishyaa06/prism-faas load <span class="tk-p">--rps</span> 120 <span class="tk-p">--seconds</span> 60 <span class="tk-p">--runtime</span> java21
+<span class="tk-pr">$ </span>npx github:krishyaa06/prism-faas load <span class="tk-p">--no-snapshots</span> <span class="tk-p">--no-prewarm</span>
+<span class="tk-pr">$ </span>npx github:krishyaa06/prism-faas compare <span class="tk-p">--runtime</span> java21</code></pre></div></div>
+      <div class="tabp" data-tabp="use"><div class="codebox"><div class="bar2"><i></i><i></i><i></i><span>terminal</span><button class="btn sm ghost copy" data-copy>Copy</button></div><pre><code><span class="tk-c"># use the CLI without installing</span>
+<span class="tk-pr">$ </span>npx github:krishyaa06/prism-faas <span class="tk-p">--help</span>
+
+<span class="tk-c"># or add the engine to your project</span>
+<span class="tk-pr">$ </span>npm install github:krishyaa06/prism-faas
+
+<span class="tk-c"># run the simulator locally</span>
+<span class="tk-pr">$ </span>git clone https://github.com/krishyaa06/prism-faas.git &amp;&amp; cd prism-faas
+<span class="tk-pr">$ </span>npx serve .   # then open http://localhost:3000</code></pre></div></div>
+    </section>
+  </main>
+  <footer class="foot"><div class="wrap">
+    <span>◆ Prism FaaS · Prism Systems 04/49 · Built by <a href="https://github.com/krishyaa06">Soumya Bhandare</a> &amp; <a href="https://dc.gg/prismprotocol" target="_blank" rel="noreferrer">Prism Protocol</a></span>
+    <span><a href="https://github.com/krishyaa06/prism-faas" target="_blank" rel="noreferrer">Source</a> · <a href="https://github.com/krishyaa06/prism-faas/blob/main/docs/ARCHITECTURE.md">Architecture</a> · <a href="https://github.com/krishyaa06/prism-faas/blob/main/docs/USAGE.md">Docs</a> · MIT License</span>
+  </div></footer>
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>
