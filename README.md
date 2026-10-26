@@ -1,4 +1,4 @@
-<!-- Prism Systems 04/49 -->
+<!-- Prism Systems 04/12 -->
 <p align="center">
   <img src="https://capsule-render.vercel.app/api?type=waving&color=0:06070d,55:7C5CFF,100:FFB547&height=210&section=header&text=Prism%20FaaS&fontSize=50&fontColor=ffffff&animation=fadeIn&fontAlignY=35&desc=Serverless%20orchestrator%3A%20MicroVM%20pools%2C%20snapshots%2C%20pre-warm%2C%20quotas&descAlignY=57&descSize=17" width="100%" alt="Prism FaaS" />
 </p>
@@ -12,7 +12,7 @@
   <a href="https://krishyaa06.github.io/prism-faas/"><img src="https://img.shields.io/badge/Live_Simulator-Open-7C5CFF?style=for-the-badge&logo=githubpages&logoColor=black" alt="Live simulator" /></a>
   <img src="https://img.shields.io/badge/Node.js-%E2%89%A518.17-339933?style=for-the-badge&logo=nodedotjs&logoColor=white" alt="Node.js 18+" />
   <img src="https://img.shields.io/badge/dependencies-0-FFB547?style=for-the-badge" alt="Zero dependencies" />
-  <img src="https://img.shields.io/badge/Prism_Systems-04%2F49-111827?style=for-the-badge" alt="Prism Systems 04/49" />
+  <img src="https://img.shields.io/badge/Prism_Systems-04%2F12-111827?style=for-the-badge" alt="Prism Systems 04/12" />
   <a href="LICENSE"><img src="https://img.shields.io/github/license/krishyaa06/prism-faas?style=for-the-badge&color=FFB547" alt="MIT License" /></a>
 </p>
 
@@ -236,7 +236,7 @@ The test suite uses the built-in `node:test` runner, so there is nothing to inst
 
 ## 🔷 Part of Prism Systems
 
-**Prism FaaS** is system **04 of 49** in **Prism Systems**, a series of open-source reference implementations of large-scale infrastructure by [Prism Protocol](https://dc.gg/prismprotocol). Each one ships a real engine, a CLI and a live simulator, all with zero dependencies.
+**Prism FaaS** is system **04 of 12** in **Prism Systems**, a series of open-source reference implementations of large-scale infrastructure by [Prism Protocol](https://dc.gg/prismprotocol). Each one ships a real engine, a CLI and a live simulator, all with zero dependencies.
 
 ## 👤 Author
 
